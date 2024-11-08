@@ -1,6 +1,12 @@
+import os
 from flask import Flask # type: ignore
+from dotenv import load_dotenv # type: ignore
+
+load_dotenv()
 
 app = Flask(__name__)
+
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 @app.route('/')
 def home():
