@@ -5,6 +5,10 @@ description = "Hexlet project - Page Analyzer"
 authors = ["DanilMullakhmetov <danilmullakhmetov@gmail.com>"]
 readme = "README.md"
 
+packages = [
+    { include = "page_analyzer" }
+]
+
 [tool.poetry.dependencies]
 python = "^3.10"
 flask = "^2.0"
@@ -14,10 +18,10 @@ python-dotenv = "^1.0.1"
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
 pytest-cov = "^5.0.0"
-flake8 = "^7.1.1"  # Оставьте только одну версию flake8
+flake8 = "^7.1.1"
 
 [tool.poetry.scripts]
-gendiff = "gendiff.scripts.gendiff:main"
+page_analyzer = "page_analyzer.app:main"
 
 [build-system]
 requires = ["poetry-core"]
