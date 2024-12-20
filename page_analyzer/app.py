@@ -172,7 +172,7 @@ def url_detail(url_id):
 
                 url = tuple_to_dict(cursor, row)
                 cursor.execute(
-                    "SELECT * FROM url_checks WHERE url_id = %s" 
+                    "SELECT * FROM url_checks WHERE url_id = %s "
                     "ORDER BY created_at DESC",
                     (url_id,))
                 checks = ([tuple_to_dict(cursor, row)
