@@ -115,6 +115,7 @@ def index():
                     conn.commit()
 
                     if result:
+                        conn.commit()
                         flash("Страница успешно добавлена", "success")
                         return redirect(url_for
                                         ("url_detail", url_id=result[0]))
@@ -127,6 +128,7 @@ def index():
                     return redirect(url_for("url_detail", url_id=url_id))
 
                 except Exception as e:
+                    conn.rollback()
                     flash(f"Ошибка базы данных: {e}", "danger")
                     return render_template("index.html")
 
@@ -207,10 +209,12 @@ def run_check(url_id):
 
                 flash("Страница успешно проверена!", "success")
             except Exception as e:
+                conn.rollback()
                 flash(f"Ошибка базы данных: {e}", "danger")
                 logging.error(f"Ошибка базы данных: {e}")
 
     return redirect(url_for("url_detail", url_id=url_id))
+
 
 
 if __name__ == "__main__":
