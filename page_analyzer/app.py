@@ -87,16 +87,12 @@ def index():
         url_name = request.form.get("url", "").strip()
 
         if not validate_url(url_name):
-            conn.rollback()
-            conn.close()
             flash("Некорректный URL.", "danger")
             return render_template("index.html")
 
         normalized_url = normalize_url(url_name)
 
         if len(normalized_url) > 255:
-            conn.rollback()
-            conn.close()
             flash("URL слишком длинный.", "danger")
             return render_template("index.html")
 
@@ -228,7 +224,6 @@ def run_check(url_id):
                 logging.error(f"Ошибка базы данных: {e}")
 
     return redirect(url_for("url_detail", url_id=url_id))
-
 
 
 if __name__ == "__main__":
