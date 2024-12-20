@@ -88,7 +88,7 @@ def index():
         url_name = request.form.get("url", "").strip()
 
         if not validate_url(url_name):
-            flash("Неверный URL.", "danger")
+            flash("Некорректный URL.", "danger")
             return render_template("index.html")
 
         normalized_url = normalize_url(url_name)
@@ -115,7 +115,7 @@ def index():
                     conn.commit()
 
                     if result:
-                        flash("URL успешно добавлен!", "success")
+                        flash("Страница успешно добавлена", "success")
                         return redirect(url_for
                                         ("url_detail", url_id=result[0]))
 
@@ -123,7 +123,7 @@ def index():
                                    [normalized_url]
                                    )
                     url_id = cursor.fetchone()[0]
-                    flash("URL уже существует в базе данных!", "warning")
+                    flash("Страница уже существует", "warning")
                     return redirect(url_for("url_detail", url_id=url_id))
 
                 except Exception as e:
