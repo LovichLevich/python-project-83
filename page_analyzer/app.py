@@ -33,7 +33,6 @@ def get_db_connection():
 
 
 def normalize_url(url_name):
-    """Normalize the URL by keeping only the scheme and netloc."""
     parsed_url = urlparse(url_name)
     return f"{parsed_url.scheme}://{parsed_url.netloc}"
 
@@ -89,6 +88,7 @@ def index():
 
         if not validate_url(url_name):
             conn.rollback()
+            conn.close()
             flash("Некорректный URL.", "danger")
             return render_template("index.html")
 
@@ -96,6 +96,7 @@ def index():
 
         if len(normalized_url) > 255:
             conn.rollback()
+            conn.close()
             flash("URL слишком длинный.", "danger")
             return render_template("index.html")
 
@@ -127,11 +128,13 @@ def index():
                                    )
                     url_id = cursor.fetchone()[0]
                     conn.rollback()
+                    conn.close()
                     flash("Страница уже существует", "warning")
                     return redirect(url_for("url_detail", url_id=url_id))
 
                 except Exception as e:
                     conn.rollback()
+                    conn.close()
                     flash(f"Ошибка базы данных: {e}", "danger")
                     return render_template("index.html")
 
@@ -173,6 +176,7 @@ def url_detail(url_id):
                 row = cursor.fetchone()
                 if not row:
                     conn.rollback()
+                    conn.close()
                     flash("URL не найден.", "danger")
                     return redirect(url_for("urls"))
 
@@ -187,6 +191,7 @@ def url_detail(url_id):
         return render_template("url_detail.html", url=url, checks=checks)
     except Exception as e:
         conn.rollback()
+        conn.close()
         logging.error(f"Error fetching URL details: {e}")
         flash(f"Произошла ошибка: {e}", "danger")
         return redirect(url_for("urls"))
@@ -200,6 +205,7 @@ def run_check(url_id):
             row = cursor.fetchone()
             if not row:
                 conn.rollback()
+                conn.close()
                 flash("URL не найден в базе данных.", "danger")
                 return redirect(url_for("index"))
 
@@ -207,6 +213,7 @@ def run_check(url_id):
 
             if metadata is None:
                 conn.rollback()
+                conn.close()
                 flash("Произошла ошибка при проверке", "danger")
                 return redirect(url_for("url_detail", url_id=url_id))
 
@@ -216,6 +223,7 @@ def run_check(url_id):
                 flash("Страница успешно проверена!", "success")
             except Exception as e:
                 conn.rollback()
+                conn.close()
                 flash(f"Ошибка базы данных: {e}", "danger")
                 logging.error(f"Ошибка базы данных: {e}")
 
