@@ -88,12 +88,14 @@ def index():
         url_name = request.form.get("url", "").strip()
 
         if not validate_url(url_name):
+            conn.rollback()
             flash("Некорректный URL.", "danger")
             return render_template("index.html")
 
         normalized_url = normalize_url(url_name)
 
         if len(normalized_url) > 255:
+            conn.rollback()
             flash("URL слишком длинный.", "danger")
             return render_template("index.html")
 
@@ -124,6 +126,7 @@ def index():
                                    [normalized_url]
                                    )
                     url_id = cursor.fetchone()[0]
+                    conn.rollback()
                     flash("Страница уже существует", "warning")
                     return redirect(url_for("url_detail", url_id=url_id))
 
@@ -169,6 +172,7 @@ def url_detail(url_id):
                 cursor.execute("SELECT * FROM urls WHERE id = %s", (url_id,))
                 row = cursor.fetchone()
                 if not row:
+                    conn.rollback()
                     flash("URL не найден.", "danger")
                     return redirect(url_for("urls"))
 
@@ -182,6 +186,7 @@ def url_detail(url_id):
 
         return render_template("url_detail.html", url=url, checks=checks)
     except Exception as e:
+        conn.rollback()
         logging.error(f"Error fetching URL details: {e}")
         flash(f"Произошла ошибка: {e}", "danger")
         return redirect(url_for("urls"))
@@ -194,19 +199,20 @@ def run_check(url_id):
             cursor.execute("SELECT name FROM urls WHERE id = %s", (url_id,))
             row = cursor.fetchone()
             if not row:
+                conn.rollback()
                 flash("URL не найден в базе данных.", "danger")
                 return redirect(url_for("index"))
 
             metadata = fetch_metadata(row[0])
 
             if metadata is None:
+                conn.rollback()
                 flash("Произошла ошибка при проверке", "danger")
                 return redirect(url_for("url_detail", url_id=url_id))
 
             try:
                 insert_url_check(cursor, url_id, metadata)
                 conn.commit()
-
                 flash("Страница успешно проверена!", "success")
             except Exception as e:
                 conn.rollback()
