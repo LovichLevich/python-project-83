@@ -129,7 +129,7 @@ def start():
 
                     conn.commit()
                     flash("Страница уже существует", "warning")
-                    return redirect(url_for("url_detail", url_id=url_id)), 500 
+                    return redirect(url_for("url_detail", url_id=url_id)), 422
 
         except Exception as e:
             with get_db_connection() as conn:
