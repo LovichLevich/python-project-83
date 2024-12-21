@@ -116,9 +116,12 @@ def index():
                     if result:
                         conn.commit()
                         flash("Страница успешно добавлена", "success")
-                        return redirect(url_for("url_detail", url_id=result[0]))
+                        return redirect(url_for
+                                        ("url_detail", url_id=result[0]))
 
-                    cursor.execute("SELECT id FROM urls WHERE name = %s", [normalized_url])
+                    cursor.execute("SELECT id FROM urls WHERE name = %s",
+                                   [normalized_url]
+                                   )
                     url_id = cursor.fetchone()[0]
 
                     conn.commit()
@@ -132,7 +135,6 @@ def index():
             return render_template("index.html")
 
     return render_template("index.html")
-
 
 
 @app.route("/urls", methods=["GET"])
@@ -217,7 +219,6 @@ def run_check(url_id):
                 logging.error(f"Ошибка базы данных: {e}")
 
     return redirect(url_for("url_detail", url_id=url_id))
-
 
 
 if __name__ == "__main__":
