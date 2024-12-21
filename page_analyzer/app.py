@@ -94,13 +94,12 @@ def index():
         normalized_url = normalize_url(url_name)
 
         if len(normalized_url) > 255:
-            conn.rollback()
             flash("URL слишком длинный.", "danger")
             return render_template("index.html")
 
-        with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                try:
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
                     cursor.execute(
                         sql.SQL(
                             """
@@ -113,28 +112,27 @@ def index():
                         [normalized_url],
                     )
                     result = cursor.fetchone()
-                    conn.commit()
 
                     if result:
                         conn.commit()
                         flash("Страница успешно добавлена", "success")
-                        return redirect(url_for
-                                        ("url_detail", url_id=result[0]))
+                        return redirect(url_for("url_detail", url_id=result[0]))
 
-                    cursor.execute("SELECT id FROM urls WHERE name = %s",
-                                   [normalized_url]
-                                   )
+                    cursor.execute("SELECT id FROM urls WHERE name = %s", [normalized_url])
                     url_id = cursor.fetchone()[0]
-                    conn.rollback()
+
+                    conn.commit()
                     flash("Страница уже существует", "warning")
                     return redirect(url_for("url_detail", url_id=url_id))
 
-                except Exception as e:
-                    conn.rollback()
-                    flash(f"Ошибка базы данных: {e}", "danger")
-                    return render_template("index.html")
+        except Exception as e:
+            with get_db_connection() as conn:
+                conn.rollback()
+            flash(f"Ошибка базы данных: {e}", "danger")
+            return render_template("index.html")
 
     return render_template("index.html")
+
 
 
 @app.route("/urls", methods=["GET"])
