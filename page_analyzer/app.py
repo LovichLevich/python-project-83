@@ -2,7 +2,10 @@ import os
 import logging
 from urllib.parse import urlparse
 
+import requests  # type: ignore
+from bs4 import BeautifulSoup  # type: ignore
 import psycopg2  # type: ignore
+from psycopg2 import sql  # type: ignore
 from dotenv import load_dotenv  # type: ignore
 from flask import (  # type: ignore
     Flask,
@@ -12,10 +15,7 @@ from flask import (  # type: ignore
     redirect,
     url_for
 )
-from psycopg2 import sql  # type: ignore
 from validators import url as validate_url  # type: ignore
-import requests  # type: ignore
-from bs4 import BeautifulSoup  # type: ignore
 
 load_dotenv()
 
