@@ -129,7 +129,7 @@ def start():
 
                     conn.commit()
                     flash("Страница уже существует", "warning")
-                    return redirect(url_for("url_detail", url_id=url_id)), 422
+                    return redirect(url_for("url_detail", url_id=url_id))
 
         except Exception as e:
             with get_db_connection() as conn:
@@ -210,7 +210,7 @@ def run_check(url_id):
             if metadata is None:
                 conn.rollback()
                 flash("Произошла ошибка при проверке", "danger")
-                return redirect(url_for("url_detail", url_id=url_id)), 422
+                return redirect(url_for("url_detail", url_id=url_id))
 
             try:
                 insert_url_check(cursor, url_id, metadata)
