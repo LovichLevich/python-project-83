@@ -1,6 +1,9 @@
 import os
-import psycopg2  # type: ignore
+import logging
 from urllib.parse import urlparse
+
+import psycopg2  # type: ignore
+from dotenv import load_dotenv  # type: ignore
 from flask import (  # type: ignore
     Flask,
     request,
@@ -10,11 +13,10 @@ from flask import (  # type: ignore
     url_for
 )
 from psycopg2 import sql  # type: ignore
-from dotenv import load_dotenv  # type: ignore
 from validators import url as validate_url  # type: ignore
 import requests  # type: ignore
 from bs4 import BeautifulSoup  # type: ignore
-import logging
+
 
 load_dotenv()
 
@@ -79,6 +81,7 @@ def insert_url_check(cursor, url_id, metadata):
             metadata['description']
         )
     )
+
 
 @app.route("/", methods=["GET"])
 def index():
