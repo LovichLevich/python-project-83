@@ -88,7 +88,6 @@ def index():
         url_name = request.form.get("url", "").strip()
 
         if not validate_url(url_name):
-            conn.rollback()
             flash("Некорректный URL.", "danger")
             return render_template("index.html")
 
