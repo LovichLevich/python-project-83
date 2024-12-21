@@ -92,13 +92,13 @@ def start():
 
         if not validate_url(url_name):
             flash("Некорректный URL.", "danger")
-            return render_template("index.html")
+            return render_template("index.html"), 422
 
         normalized_url = normalize_url(url_name)
 
         if len(normalized_url) > 255:
             flash("URL слишком длинный.", "danger")
-            return render_template("index.html")
+            return render_template("index.html"), 422
 
         try:
             with get_db_connection() as conn:
@@ -129,7 +129,7 @@ def start():
 
                     conn.commit()
                     flash("Страница уже существует", "warning")
-                    return redirect(url_for("url_detail", url_id=url_id))
+                    return redirect(url_for("url_detail", url_id=url_id)), 500 
 
         except Exception as e:
             with get_db_connection() as conn:
@@ -176,7 +176,7 @@ def url_detail(url_id):
                 if not row:
                     conn.rollback()
                     flash("URL не найден.", "danger")
-                    return redirect(url_for("urls"))
+                    return redirect(url_for("urls")), 422
 
                 url = tuple_to_dict(cursor, row)
                 cursor.execute(
@@ -191,7 +191,7 @@ def url_detail(url_id):
         conn.rollback()
         logging.error(f"Error fetching URL details: {e}")
         flash(f"Произошла ошибка: {e}", "danger")
-        return redirect(url_for("urls"))
+        return redirect(url_for("urls")), 500
 
 
 @app.route("/run_check/<int:url_id>", methods=["POST"])
@@ -203,14 +203,14 @@ def run_check(url_id):
             if not row:
                 conn.rollback()
                 flash("URL не найден в базе данных.", "danger")
-                return redirect(url_for("index"))
+                return redirect(url_for("index")), 422
 
             metadata = fetch_metadata(row[0])
 
             if metadata is None:
                 conn.rollback()
                 flash("Произошла ошибка при проверке", "danger")
-                return redirect(url_for("url_detail", url_id=url_id))
+                return redirect(url_for("url_detail", url_id=url_id)), 422
 
             try:
                 insert_url_check(cursor, url_id, metadata)
@@ -219,7 +219,7 @@ def run_check(url_id):
             except Exception as e:
                 conn.rollback()
                 flash(f"Ошибка базы данных: {e}", "danger")
-                logging.error(f"Ошибка базы данных: {e}")
+                logging.error(f"Ошибка базы данных: {e}"), 500
 
     return redirect(url_for("url_detail", url_id=url_id))
 
