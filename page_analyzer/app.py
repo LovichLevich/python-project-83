@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 
 import psycopg2  # type: ignore
 from dotenv import load_dotenv  # type: ignore
-from flask import (  # type: ignore
+from flask import ( # type: ignore
     Flask,
     request,
     render_template,
@@ -17,8 +17,8 @@ from validators import url as validate_url  # type: ignore
 import requests  # type: ignore
 from bs4 import BeautifulSoup  # type: ignore
 
-
 load_dotenv()
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
