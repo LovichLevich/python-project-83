@@ -33,7 +33,6 @@ def get_db_connection():
 
 
 def normalize_url(url_name):
-    """Normalize the URL by keeping only the scheme and netloc."""
     parsed_url = urlparse(url_name)
     return f"{parsed_url.scheme}://{parsed_url.netloc}"
 
@@ -81,9 +80,13 @@ def insert_url_check(cursor, url_id, metadata):
         )
     )
 
-
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
 def index():
+    return render_template("index.html")
+
+
+@app.route("/urls", methods=["POST"])
+def start():
     if request.method == "POST":
         url_name = request.form.get("url", "").strip()
 
