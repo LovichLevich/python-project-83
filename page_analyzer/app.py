@@ -6,8 +6,14 @@ import psycopg2  # type: ignore
 import requests  # type: ignore
 from bs4 import BeautifulSoup  # type: ignore
 from dotenv import load_dotenv  # type: ignore
-from flask import (Flask, flash, redirect, render_template,  # type: ignore
-                   request, url_for)
+from flask import (  # type: ignore
+    Flask,
+    flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from psycopg2 import sql  # type: ignore
 from validators import url as validate_url  # type: ignore
 
