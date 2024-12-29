@@ -1,4 +1,3 @@
-# app.py
 import logging
 import os
 from flask import (  # type: ignore
@@ -9,6 +8,7 @@ from flask import (  # type: ignore
     request,
     url_for,
 )
+from page_analyzer.utils import fetch_metadata
 from validators import url as validate_url  # type: ignore
 from db import (
     fetch_url_name_by_id,
@@ -22,8 +22,7 @@ from db import (
     fetch_url_checks,
     insert_url_check,
 )
-import requests  # type: ignore
-from bs4 import BeautifulSoup  # type: ignore
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -32,28 +31,6 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
-
-
-def fetch_metadata(url):
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
-        h1 = soup.find('h1').text.strip() if soup.find('h1') else ''
-        title = soup.find('title').text.strip() if soup.find('title') else ''
-        description_tag = soup.find('meta', attrs={'name': 'description'})
-        description = (
-            description_tag['content'].strip()
-            if description_tag else ''
-        )
-        return {
-            'status_code': response.status_code,
-            'h1': h1,
-            'title': title,
-            'description': description
-        }
-    except requests.RequestException:
-        return None
 
 
 @app.route("/", methods=["GET"])
