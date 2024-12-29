@@ -3,8 +3,8 @@ import requests  # type: ignore
 from urllib.parse import urlparse
 import os
 import psycopg2  # type: ignore
+from page_analyzer.app import DATABASE_URL
 
-DATABASE_URL = os.getenv('DATABASE_URL')
 
 
 def fetch_metadata(url):
