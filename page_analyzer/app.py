@@ -1,12 +1,7 @@
+# app.py
 import logging
 import os
-from urllib.parse import urlparse
-
-import psycopg2  # type: ignore
-import requests  # type: ignore
-from bs4 import BeautifulSoup  # type: ignore
-from dotenv import load_dotenv  # type: ignore
-from flask import (  # type: ignore
+from flask import ( # type: ignore
     Flask,
     flash,
     redirect,
@@ -14,40 +9,33 @@ from flask import (  # type: ignore
     request,
     url_for,
 )
-from psycopg2 import sql  # type: ignore
 from validators import url as validate_url  # type: ignore
-
-load_dotenv()
-
+from db import (
+    get_db_connection,
+    normalize_url,
+    tuple_to_dict,
+    insert_url,
+    find_url_id,
+    fetch_all_urls,
+    fetch_url_by_id,
+    fetch_url_checks,
+    insert_url_check,
+)
+import requests  # type: ignore
+from bs4 import BeautifulSoup  # type: ignore
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-DATABASE_URL = os.getenv('DATABASE_URL')
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-
-def get_db_connection():
-    return psycopg2.connect(DATABASE_URL)
-
-
-def normalize_url(url_name):
-    parsed_url = urlparse(url_name)
-    return f"{parsed_url.scheme}://{parsed_url.netloc}"
-
-
-def tuple_to_dict(cursor, row):
-    return {cursor.description[i][0]: value for i, value in enumerate(row)}
-
-
 def fetch_metadata(url):
     try:
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-
         soup = BeautifulSoup(response.text, 'html.parser')
         h1 = soup.find('h1').text.strip() if soup.find('h1') else ''
         title = soup.find('title').text.strip() if soup.find('title') else ''
@@ -56,7 +44,6 @@ def fetch_metadata(url):
             description_tag['content'].strip()
             if description_tag else ''
         )
-
         return {
             'status_code': response.status_code,
             'h1': h1,
@@ -66,136 +53,64 @@ def fetch_metadata(url):
     except requests.RequestException:
         return None
 
-
-def insert_url_check(cursor, url_id, metadata):
-    cursor.execute(
-        """
-        INSERT INTO url_checks (url_id, status_code, h1, title, description)
-        VALUES (%s, %s, %s, %s, %s)
-        """,
-        (
-            url_id,
-            metadata['status_code'],
-            metadata['h1'],
-            metadata['title'],
-            metadata['description']
-        )
-    )
-
-
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
-
 @app.route("/urls", methods=["POST"])
 def start():
-    if request.method == "POST":
-        url_name = request.form.get("url", "").strip()
+    url_name = request.form.get("url", "").strip()
+    if not validate_url(url_name):
+        flash("Некорректный URL.", "danger")
+        return render_template("index.html"), 422
 
-        if not validate_url(url_name):
-            flash("Некорректный URL.", "danger")
-            return render_template("index.html"), 422
+    normalized_url = normalize_url(url_name)
+    if len(normalized_url) > 255:
+        flash("URL слишком длинный.", "danger")
+        return render_template("index.html"), 422
 
-        normalized_url = normalize_url(url_name)
-
-        if len(normalized_url) > 255:
-            flash("URL слишком длинный.", "danger")
-            return render_template("index.html"), 422
-
-        try:
-            with get_db_connection() as conn:
-                with conn.cursor() as cursor:
-                    cursor.execute(
-                        sql.SQL(
-                            """
-                            INSERT INTO urls (name)
-                            VALUES (%s)
-                            ON CONFLICT (name) DO NOTHING
-                            RETURNING id
-                            """
-                        ),
-                        [normalized_url],
-                    )
-                    result = cursor.fetchone()
-
-                    if result:
-                        conn.commit()
-                        flash("Страница успешно добавлена", "success")
-                        return redirect(url_for
-                                        ("url_detail", url_id=result[0]))
-
-                    cursor.execute("SELECT id FROM urls WHERE name = %s",
-                                   [normalized_url]
-                                   )
-                    url_id = cursor.fetchone()[0]
-
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                result = insert_url(cursor, normalized_url)
+                if result:
                     conn.commit()
-                    flash("Страница уже существует", "warning")
-                    return redirect(url_for("url_detail", url_id=url_id))
+                    flash("Страница успешно добавлена", "success")
+                    return redirect(url_for("url_detail", url_id=result[0]))
 
-        except Exception as e:
-            with get_db_connection() as conn:
-                conn.rollback()
-            flash(f"Ошибка базы данных: {e}", "danger")
-            return render_template("index.html")
-
-    return render_template("index.html")
-
+                url_id = find_url_id(cursor, normalized_url)[0]
+                conn.commit()
+                flash("Страница уже существует", "warning")
+                return redirect(url_for("url_detail", url_id=url_id))
+    except Exception as e:
+        flash(f"Ошибка базы данных: {e}", "danger")
+        return render_template("index.html")
 
 @app.route("/urls", methods=["GET"])
 def urls():
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
-            cursor.execute("""
-            SELECT
-                urls.id,
-                urls.name,
-                (SELECT created_at
-                FROM url_checks
-                WHERE url_checks.url_id = urls.id
-                ORDER BY created_at DESC
-                LIMIT 1) AS created_at,
-                (SELECT status_code
-                FROM url_checks
-                WHERE url_checks.url_id = urls.id
-                ORDER BY created_at DESC
-                LIMIT 1) AS status_code
-            FROM urls
-            ORDER BY urls.id DESC;
-            """)
-            sites = cursor.fetchall()
+            sites = fetch_all_urls(cursor)
         conn.commit()
     return render_template("index_urls.html", sites=sites)
-
 
 @app.route("/urls/<int:url_id>", methods=["GET"])
 def url_detail(url_id):
     try:
         with get_db_connection() as conn:
             with conn.cursor() as cursor:
-                cursor.execute("SELECT * FROM urls WHERE id = %s", (url_id,))
-                row = cursor.fetchone()
+                row = fetch_url_by_id(cursor, url_id)
                 if not row:
-                    conn.rollback()
                     flash("URL не найден.", "danger")
                     return redirect(url_for("urls")), 422
 
                 url = tuple_to_dict(cursor, row)
-                cursor.execute(
-                    "SELECT * FROM url_checks WHERE url_id = %s "
-                    "ORDER BY created_at DESC",
-                    (url_id,))
-                checks = ([tuple_to_dict(cursor, row)
-                           for row in cursor.fetchall()])
-
+                checks = [tuple_to_dict(cursor, row) for row in fetch_url_checks(cursor, url_id)]
         return render_template("url_detail.html", url=url, checks=checks)
     except Exception as e:
-        conn.rollback()
         logging.error(f"Error fetching URL details: {e}")
         flash(f"Произошла ошибка: {e}", "danger")
         return redirect(url_for("urls")), 500
-
 
 @app.route("/run_check/<int:url_id>", methods=["POST"])
 def run_check(url_id):
@@ -204,14 +119,11 @@ def run_check(url_id):
             cursor.execute("SELECT name FROM urls WHERE id = %s", (url_id,))
             row = cursor.fetchone()
             if not row:
-                conn.rollback()
                 flash("URL не найден в базе данных.", "danger")
                 return redirect(url_for("index")), 422
 
             metadata = fetch_metadata(row[0])
-
             if metadata is None:
-                conn.rollback()
                 flash("Произошла ошибка при проверке", "danger")
                 return redirect(url_for("url_detail", url_id=url_id))
 
@@ -222,10 +134,8 @@ def run_check(url_id):
             except Exception as e:
                 conn.rollback()
                 flash(f"Ошибка базы данных: {e}", "danger")
-                logging.error(f"Ошибка базы данных: {e}"), 500
-
+                logging.error(f"Ошибка базы данных: {e}")
     return redirect(url_for("url_detail", url_id=url_id))
-
 
 if __name__ == "__main__":
     app.run(debug=True)
