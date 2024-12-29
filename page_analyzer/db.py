@@ -1,36 +1,11 @@
-import psycopg2  # type: ignore
-from psycopg2 import sql  # type: ignore
-import os
-from urllib.parse import urlparse
-
-DATABASE_URL = os.getenv('DATABASE_URL')
-
-
-def get_db_connection():
-    return psycopg2.connect(DATABASE_URL)
-
-
-def normalize_url(url_name):
-    parsed_url = urlparse(url_name)
-    return f"{parsed_url.scheme}://{parsed_url.netloc}"
-
-
-def tuple_to_dict(cursor, row):
-    return {cursor.description[i][0]: value for i, value in enumerate(row)}
-
-
 def insert_url(cursor, normalized_url):
     cursor.execute(
-        sql.SQL(
-            """
-            INSERT INTO urls (name)
-            VALUES (%s)
-            ON CONFLICT (name) DO NOTHING
-            RETURNING id
-            """
-        ),
-        [normalized_url],
-    )
+        """
+        INSERT INTO urls (name)
+        VALUES (%s)
+        ON CONFLICT (name) DO NOTHING
+        RETURNING id
+        """, [normalized_url])
     return cursor.fetchone()
 
 

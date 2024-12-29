@@ -1,5 +1,10 @@
 from bs4 import BeautifulSoup  # type: ignore
 import requests  # type: ignore
+from urllib.parse import urlparse
+import os
+import psycopg2  # type: ignore
+
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 
 def fetch_metadata(url):
@@ -22,3 +27,16 @@ def fetch_metadata(url):
         }
     except requests.RequestException:
         return None
+
+
+def get_db_connection():
+    return psycopg2.connect(DATABASE_URL)
+
+
+def normalize_url(url_name):
+    parsed_url = urlparse(url_name)
+    return f"{parsed_url.scheme}://{parsed_url.netloc}"
+
+
+def tuple_to_dict(cursor, row):
+    return {cursor.description[i][0]: value for i, value in enumerate(row)}

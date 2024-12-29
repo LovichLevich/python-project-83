@@ -8,13 +8,15 @@ from flask import (  # type: ignore
     request,
     url_for,
 )
-from page_analyzer.utils import fetch_metadata
-from validators import url as validate_url  # type: ignore
-from db import (
-    fetch_url_name_by_id,
+from page_analyzer.utils import (
+    fetch_metadata,
     get_db_connection,
     normalize_url,
     tuple_to_dict,
+)
+from validators import url as validate_url  # type: ignore
+from page_analyzer.db import (
+    fetch_url_name_by_id,
     insert_url,
     find_url_id,
     fetch_all_urls,
