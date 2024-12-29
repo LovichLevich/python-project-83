@@ -1,7 +1,7 @@
 # app.py
 import logging
 import os
-from flask import ( # type: ignore
+from flask import (  # type: ignore
     Flask,
     flash,
     redirect,
@@ -11,6 +11,7 @@ from flask import ( # type: ignore
 )
 from validators import url as validate_url  # type: ignore
 from db import (
+    fetch_url_name_by_id,
     get_db_connection,
     normalize_url,
     tuple_to_dict,
@@ -31,6 +32,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
+
 
 def fetch_metadata(url):
     try:
@@ -53,9 +55,11 @@ def fetch_metadata(url):
     except requests.RequestException:
         return None
 
+
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
+
 
 @app.route("/urls", methods=["POST"])
 def start():
@@ -86,6 +90,7 @@ def start():
         flash(f"Ошибка базы данных: {e}", "danger")
         return render_template("index.html")
 
+
 @app.route("/urls", methods=["GET"])
 def urls():
     with get_db_connection() as conn:
@@ -93,6 +98,7 @@ def urls():
             sites = fetch_all_urls(cursor)
         conn.commit()
     return render_template("index_urls.html", sites=sites)
+
 
 @app.route("/urls/<int:url_id>", methods=["GET"])
 def url_detail(url_id):
@@ -105,24 +111,25 @@ def url_detail(url_id):
                     return redirect(url_for("urls")), 422
 
                 url = tuple_to_dict(cursor, row)
-                checks = [tuple_to_dict(cursor, row) for row in fetch_url_checks(cursor, url_id)]
+                checks = [tuple_to_dict(cursor, row)
+                          for row in fetch_url_checks(cursor, url_id)]
         return render_template("url_detail.html", url=url, checks=checks)
     except Exception as e:
-        logging.error(f"Error fetching URL details: {e}")
+        logging.error(f"Ошибка при получении сведений об URL-адресе: {e}")
         flash(f"Произошла ошибка: {e}", "danger")
         return redirect(url_for("urls")), 500
+
 
 @app.route("/run_check/<int:url_id>", methods=["POST"])
 def run_check(url_id):
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT name FROM urls WHERE id = %s", (url_id,))
-            row = cursor.fetchone()
-            if not row:
+            url_name = fetch_url_name_by_id(cursor, url_id)
+            if not url_name:
                 flash("URL не найден в базе данных.", "danger")
                 return redirect(url_for("index")), 422
 
-            metadata = fetch_metadata(row[0])
+            metadata = fetch_metadata(url_name)
             if metadata is None:
                 flash("Произошла ошибка при проверке", "danger")
                 return redirect(url_for("url_detail", url_id=url_id))
@@ -136,6 +143,7 @@ def run_check(url_id):
                 flash(f"Ошибка базы данных: {e}", "danger")
                 logging.error(f"Ошибка базы данных: {e}")
     return redirect(url_for("url_detail", url_id=url_id))
+
 
 if __name__ == "__main__":
     app.run(debug=True)

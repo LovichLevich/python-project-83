@@ -5,15 +5,19 @@ from urllib.parse import urlparse
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
+
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
+
 
 def normalize_url(url_name):
     parsed_url = urlparse(url_name)
     return f"{parsed_url.scheme}://{parsed_url.netloc}"
 
+
 def tuple_to_dict(cursor, row):
     return {cursor.description[i][0]: value for i, value in enumerate(row)}
+
 
 def insert_url(cursor, normalized_url):
     cursor.execute(
@@ -29,9 +33,11 @@ def insert_url(cursor, normalized_url):
     )
     return cursor.fetchone()
 
+
 def find_url_id(cursor, normalized_url):
     cursor.execute("SELECT id FROM urls WHERE name = %s", [normalized_url])
     return cursor.fetchone()
+
 
 def fetch_all_urls(cursor):
     cursor.execute("""
@@ -53,9 +59,11 @@ def fetch_all_urls(cursor):
     """)
     return cursor.fetchall()
 
+
 def fetch_url_by_id(cursor, url_id):
     cursor.execute("SELECT * FROM urls WHERE id = %s", (url_id,))
     return cursor.fetchone()
+
 
 def fetch_url_checks(cursor, url_id):
     cursor.execute(
@@ -63,6 +71,7 @@ def fetch_url_checks(cursor, url_id):
         (url_id,),
     )
     return cursor.fetchall()
+
 
 def insert_url_check(cursor, url_id, metadata):
     cursor.execute(
@@ -78,3 +87,9 @@ def insert_url_check(cursor, url_id, metadata):
             metadata['description']
         )
     )
+
+
+def fetch_url_name_by_id(cursor, url_id):
+    cursor.execute("SELECT name FROM urls WHERE id = %s", (url_id,))
+    row = cursor.fetchone()
+    return row[0] if row else None
