@@ -9,22 +9,24 @@ from flask import (  # type: ignore
     url_for,
 )
 from page_analyzer.utils import (
-    fetch_metadata,
-    get_db_connection,
+    get_metadata,
     normalize_url,
     tuple_to_dict,
 )
-from validators import url as validate_url  # type: ignore
+from validators import url as validate_url # type: ignore
+from dotenv import load_dotenv # type: ignore
 from page_analyzer.db import (
-    fetch_url_name_by_id,
-    insert_url,
+    get_db_connection,
+    get_url_name_by_id,
+    add_url,
     find_url_id,
-    fetch_all_urls,
-    fetch_url_by_id,
-    fetch_url_checks,
-    insert_url_check,
+    get_all_urls,
+    get_url_by_id,
+    get_url_checks,
+    add_url_check,
 )
 
+load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -34,6 +36,12 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
+
+
+@app.errorhandler(Exception)
+def handle_general_error(error):
+    logging.exception("Произошла непредвиденная ошибка.")
+    return redirect(url_for("index")), 500
 
 
 @app.route("/", methods=["GET"])
@@ -53,77 +61,56 @@ def start():
         flash("URL слишком длинный.", "danger")
         return render_template("index.html"), 422
 
-    try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                result = insert_url(cursor, normalized_url)
-                if result:
-                    conn.commit()
-                    flash("Страница успешно добавлена", "success")
-                    return redirect(url_for("url_detail", url_id=result[0]))
+    with get_db_connection() as conn:
+        result = add_url(conn, normalized_url)
+        if result:
+            flash("Страница успешно добавлена", "success")
+            return redirect(url_for("url_detail", url_id=result[0]))
 
-                url_id = find_url_id(cursor, normalized_url)[0]
-                conn.commit()
-                flash("Страница уже существует", "warning")
-                return redirect(url_for("url_detail", url_id=url_id))
-    except Exception as e:
-        flash(f"Ошибка базы данных: {e}", "danger")
-        return render_template("index.html")
+        url_id = find_url_id(conn, normalized_url)[0]
+        flash("Страница уже существует", "warning")
+        return redirect(url_for("url_detail", url_id=url_id))
 
 
 @app.route("/urls", methods=["GET"])
 def urls():
     with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            sites = fetch_all_urls(cursor)
-        conn.commit()
+        sites = get_all_urls(conn)
     return render_template("index_urls.html", sites=sites)
 
 
 @app.route("/urls/<int:url_id>", methods=["GET"])
 def url_detail(url_id):
-    try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                row = fetch_url_by_id(cursor, url_id)
-                if not row:
-                    flash("URL не найден.", "danger")
-                    return redirect(url_for("urls")), 422
+    with get_db_connection() as conn:
+        row = get_url_by_id(conn, url_id)
+        if not row:
+            flash("URL не найден.", "danger")
+            return redirect(url_for("urls")), 422
 
-                url = tuple_to_dict(cursor, row)
-                checks = [tuple_to_dict(cursor, row)
-                          for row in fetch_url_checks(cursor, url_id)]
-        return render_template("url_detail.html", url=url, checks=checks)
-    except Exception as e:
-        logging.error(f"Ошибка при получении сведений об URL-адресе: {e}")
-        flash(f"Произошла ошибка: {e}", "danger")
-        return redirect(url_for("urls")), 500
+        url = tuple_to_dict(conn, row)
+        checks = [tuple_to_dict(conn, check) for check in get_url_checks(conn, url_id)]
+    
+    return render_template("url_detail.html", url=url, checks=checks)
+
+
 
 
 @app.route("/run_check/<int:url_id>", methods=["POST"])
 def run_check(url_id):
     with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            url_name = fetch_url_name_by_id(cursor, url_id)
-            if not url_name:
-                flash("URL не найден в базе данных.", "danger")
-                return redirect(url_for("index")), 422
+        url_name = get_url_name_by_id(conn, url_id)
+        if not url_name:
+            flash("URL не найден в базе данных.", "danger")
+            return redirect(url_for("index")), 422
 
-            metadata = fetch_metadata(url_name)
-            if metadata is None:
-                flash("Произошла ошибка при проверке", "danger")
-                return redirect(url_for("url_detail", url_id=url_id))
+        metadata = get_metadata(url_name)
+        if metadata is None:
+            flash("Произошла ошибка при проверке", "danger")
+            return redirect(url_for("url_detail", url_id=url_id))
 
-            try:
-                insert_url_check(cursor, url_id, metadata)
-                conn.commit()
-                flash("Страница успешно проверена!", "success")
-            except Exception as e:
-                conn.rollback()
-                flash(f"Ошибка базы данных: {e}", "danger")
-                logging.error(f"Ошибка базы данных: {e}")
+        add_url_check(conn, url_id, metadata)
+        flash("Страница успешно проверена!", "success")
     return redirect(url_for("url_detail", url_id=url_id))
-
 
 if __name__ == "__main__":
     app.run(debug=True)
