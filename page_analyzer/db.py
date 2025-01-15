@@ -1,33 +1,45 @@
 import os
-import psycopg2 # type: ignore
+from contextlib import contextmanager
+
+import psycopg2  # type: ignore
+from psycopg2.extras import DictCursor  # type: ignore
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
+
+@contextmanager
 def get_db_connection():
     conn = psycopg2.connect(DATABASE_URL)
-    return conn
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 def add_url(conn, normalized_url):
-    with conn.cursor() as cursor:
+    with conn.cursor(cursor_factory=DictCursor) as cursor:
         cursor.execute(
             """
             INSERT INTO urls (name)
             VALUES (%s)
             ON CONFLICT (name) DO NOTHING
             RETURNING id
-            """, [normalized_url])
-        return cursor.fetchone()
+            """, [normalized_url]
+        )
+        result = cursor.fetchone()
+        conn.commit()
+        return result['id'] if result else None
 
 
 def find_url_id(conn, normalized_url):
-    with conn.cursor() as cursor:
+    with conn.cursor(cursor_factory=DictCursor) as cursor:
         cursor.execute("SELECT id FROM urls WHERE name = %s", [normalized_url])
-        return cursor.fetchone()
+        result = cursor.fetchone()
+        return result['id'] if result else None
 
 
 def get_all_urls(conn):
-    with conn.cursor() as cursor:
+    with conn.cursor(cursor_factory=DictCursor) as cursor:
         cursor.execute(
             """
             SELECT
@@ -50,25 +62,28 @@ def get_all_urls(conn):
 
 
 def get_url_by_id(conn, url_id):
-    with conn.cursor() as cursor:
+    with conn.cursor(cursor_factory=DictCursor) as cursor:
         cursor.execute("SELECT * FROM urls WHERE id = %s", (url_id,))
         return cursor.fetchone()
 
 
 def get_url_checks(conn, url_id):
-    with conn.cursor() as cursor:
+    with conn.cursor(cursor_factory=DictCursor) as cursor:
         cursor.execute(
-            "SELECT * FROM url_checks WHERE url_id = %s ORDER BY created_at DESC",
-            (url_id,),
+            """SELECT * FROM url_checks
+            WHERE url_id = %s
+            ORDER BY created_at DESC""",
+            (url_id,)
         )
         return cursor.fetchall()
 
 
 def add_url_check(conn, url_id, metadata):
-    with conn.cursor() as cursor:
+    with conn.cursor(cursor_factory=DictCursor) as cursor:
         cursor.execute(
             """
-            INSERT INTO url_checks (url_id, status_code, h1, title, description)
+            INSERT INTO
+            url_checks (url_id, status_code, h1, title, description)
             VALUES (%s, %s, %s, %s, %s)
             """,
             (
@@ -79,10 +94,11 @@ def add_url_check(conn, url_id, metadata):
                 metadata['description']
             )
         )
+        conn.commit()
 
 
 def get_url_name_by_id(conn, url_id):
-    with conn.cursor() as cursor:
+    with conn.cursor(cursor_factory=DictCursor) as cursor:
         cursor.execute("SELECT name FROM urls WHERE id = %s", (url_id,))
-        row = cursor.fetchone()
-        return row[0] if row else None
+        result = cursor.fetchone()
+        return result['name'] if result else None

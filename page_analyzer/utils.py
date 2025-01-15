@@ -1,7 +1,5 @@
-import logging
-from bs4 import BeautifulSoup  # type: ignore
 import requests  # type: ignore
-from urllib.parse import urlparse
+from bs4 import BeautifulSoup  # type: ignore
 
 
 def get_metadata(url):
@@ -24,13 +22,3 @@ def get_metadata(url):
         }
     except requests.RequestException:
         return None
-
-
-def normalize_url(url_name):
-    parsed_url = urlparse(url_name)
-    return f"{parsed_url.scheme}://{parsed_url.netloc}"
-
-
-def tuple_to_dict(conn, row):
-    cursor = conn.cursor()
-    return {cursor.description[i][0]: value for i, value in enumerate(row)}

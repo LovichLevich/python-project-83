@@ -1,5 +1,7 @@
 import logging
 import os
+
+from dotenv import load_dotenv  # type: ignore
 from flask import (  # type: ignore
     Flask,
     flash,
@@ -8,27 +10,23 @@ from flask import (  # type: ignore
     request,
     url_for,
 )
-from page_analyzer.utils import (
-    get_metadata,
-    normalize_url,
-    tuple_to_dict,
-)
-from validators import url as validate_url # type: ignore
-from dotenv import load_dotenv # type: ignore
+from validators import url as validate_url  # type: ignore
+
 from page_analyzer.db import (
-    get_db_connection,
-    get_url_name_by_id,
     add_url,
+    add_url_check,
     find_url_id,
     get_all_urls,
+    get_db_connection,
     get_url_by_id,
     get_url_checks,
-    add_url_check,
+    get_url_name_by_id,
 )
-
-load_dotenv()
+from page_analyzer.url_handling import normalize_url, url_length_check
+from page_analyzer.utils import get_metadata
 
 app = Flask(__name__)
+load_dotenv()
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 
@@ -38,10 +36,14 @@ logging.basicConfig(
 )
 
 
-@app.errorhandler(Exception)
-def handle_general_error(error):
-    logging.exception("Произошла непредвиденная ошибка.")
-    return redirect(url_for("index")), 500
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500
 
 
 @app.route("/", methods=["GET"])
@@ -57,18 +59,18 @@ def start():
         return render_template("index.html"), 422
 
     normalized_url = normalize_url(url_name)
-    if len(normalized_url) > 255:
+    if url_length_check(normalized_url):
         flash("URL слишком длинный.", "danger")
         return render_template("index.html"), 422
 
     with get_db_connection() as conn:
-        result = add_url(conn, normalized_url)
-        if result:
-            flash("Страница успешно добавлена", "success")
-            return redirect(url_for("url_detail", url_id=result[0]))
+        existing_url = find_url_id(conn, normalized_url)
+        if existing_url is not None:
+            flash("Страница уже существует", "warning")
+            return redirect(url_for("url_detail", url_id=existing_url))
 
-        url_id = find_url_id(conn, normalized_url)[0]
-        flash("Страница уже существует", "warning")
+        url_id = add_url(conn, normalized_url)
+        flash("Страница успешно добавлена", "success")
         return redirect(url_for("url_detail", url_id=url_id))
 
 
@@ -82,17 +84,12 @@ def urls():
 @app.route("/urls/<int:url_id>", methods=["GET"])
 def url_detail(url_id):
     with get_db_connection() as conn:
-        row = get_url_by_id(conn, url_id)
-        if not row:
+        url = get_url_by_id(conn, url_id)
+        if not url:
             flash("URL не найден.", "danger")
-            return redirect(url_for("urls")), 422
-
-        url = tuple_to_dict(conn, row)
-        checks = [tuple_to_dict(conn, check) for check in get_url_checks(conn, url_id)]
-    
+            return redirect(url_for("urls")), 404
+        checks = get_url_checks(conn, url_id)
     return render_template("url_detail.html", url=url, checks=checks)
-
-
 
 
 @app.route("/run_check/<int:url_id>", methods=["POST"])
@@ -111,6 +108,7 @@ def run_check(url_id):
         add_url_check(conn, url_id, metadata)
         flash("Страница успешно проверена!", "success")
     return redirect(url_for("url_detail", url_id=url_id))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
