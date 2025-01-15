@@ -1,9 +1,11 @@
 import os
 from contextlib import contextmanager
+from dotenv import load_dotenv  # type: ignore
 
 import psycopg2  # type: ignore
 from psycopg2.extras import DictCursor  # type: ignore
 
+load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 
