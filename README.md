@@ -55,8 +55,7 @@ psql -U <username> -d <database_name> -f database.sql
 ```
 
 ### **5. Run the Application:**
-Launch the application using **Uvicorn**:
-
+Launch the application using **Makefile**:
 ```bash
 make start
 ```
