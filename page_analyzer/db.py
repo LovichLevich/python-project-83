@@ -25,17 +25,18 @@ def add_url(conn, normalized_url):
             VALUES (%s)
             ON CONFLICT (name) DO NOTHING
             RETURNING id
-            """, [normalized_url]
+            """,
+            [normalized_url],
         )
         result = cursor.fetchone()
-        return result['id'] if result else None
+        return result["id"] if result else None
 
 
 def find_url_id(conn, normalized_url):
     with conn.cursor(cursor_factory=DictCursor) as cursor:
         cursor.execute("SELECT id FROM urls WHERE name = %s", [normalized_url])
         result = cursor.fetchone()
-        return result['id'] if result else None
+        return result["id"] if result else None
 
 
 def get_all_urls(conn):
@@ -57,7 +58,8 @@ def get_all_urls(conn):
                  LIMIT 1) AS status_code
             FROM urls
             ORDER BY urls.id DESC;
-            """)
+            """
+        )
         return cursor.fetchall()
 
 
@@ -73,7 +75,7 @@ def get_url_checks(conn, url_id):
             """SELECT * FROM url_checks
             WHERE url_id = %s
             ORDER BY created_at DESC""",
-            (url_id,)
+            (url_id,),
         )
         return cursor.fetchall()
 
@@ -88,9 +90,9 @@ def add_url_check(conn, url_id, metadata):
             """,
             (
                 url_id,
-                metadata['status_code'],
-                metadata['h1'],
-                metadata['title'],
-                metadata['description']
-            )
+                metadata["status_code"],
+                metadata["h1"],
+                metadata["title"],
+                metadata["description"],
+            ),
         )

@@ -26,24 +26,23 @@ from page_analyzer.utils import get_metadata
 
 load_dotenv()
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['DATABASE_URL'] = os.getenv('DATABASE_URL')
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+app.config["DATABASE_URL"] = os.getenv("DATABASE_URL")
 
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html'), 404
+    return render_template("404.html"), 404
 
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    return render_template('500.html'), 500
+    return render_template("500.html"), 500
 
 
 @app.route("/", methods=["GET"])
@@ -63,7 +62,7 @@ def start():
         flash("URL слишком длинный.", "danger")
         return render_template("index.html"), 422
 
-    with get_db_connection(app.config['DATABASE_URL']) as conn:
+    with get_db_connection(app.config["DATABASE_URL"]) as conn:
         existing_url_id = find_url_id(conn, normalized_url)
         if existing_url_id is not None:
             flash("Страница уже существует", "warning")
@@ -76,14 +75,14 @@ def start():
 
 @app.route("/urls", methods=["GET"])
 def urls():
-    with get_db_connection(app.config['DATABASE_URL']) as conn:
+    with get_db_connection(app.config["DATABASE_URL"]) as conn:
         urls = get_all_urls(conn)
     return render_template("index_urls.html", urls=urls)
 
 
 @app.route("/urls/<int:url_id>", methods=["GET"])
 def url_detail(url_id):
-    with get_db_connection(app.config['DATABASE_URL']) as conn:
+    with get_db_connection(app.config["DATABASE_URL"]) as conn:
         url = get_url_id(conn, url_id)
         if not url:
             flash("URL не найден.", "danger")
@@ -94,13 +93,13 @@ def url_detail(url_id):
 
 @app.route("/run_check/<int:url_id>", methods=["POST"])
 def run_check(url_id):
-    with get_db_connection(app.config['DATABASE_URL']) as conn:
+    with get_db_connection(app.config["DATABASE_URL"]) as conn:
         url_data = get_url_id(conn, url_id)
         if not url_data:
             flash("URL не найден в базе данных.", "danger")
             return redirect(url_for("index")), 422
 
-        url_name = url_data['name']
+        url_name = url_data["name"]
 
         metadata = get_metadata(url_name)
         if metadata is None:
