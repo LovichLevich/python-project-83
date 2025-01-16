@@ -64,10 +64,10 @@ def start():
         return render_template("index.html"), 422
 
     with get_db_connection() as conn:
-        existing_url = find_url_id(conn, normalized_url)
-        if existing_url is not None:
+        existing_url_id = find_url_id(conn, normalized_url)
+        if existing_url_id is not None:
             flash("Страница уже существует", "warning")
-            return redirect(url_for("url_detail", url_id=existing_url))
+            return redirect(url_for("url_detail", url_id=existing_url_id))
 
         url_id = add_url(conn, normalized_url)
         flash("Страница успешно добавлена", "success")

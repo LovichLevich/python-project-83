@@ -14,6 +14,7 @@ def get_db_connection():
     conn = psycopg2.connect(DATABASE_URL)
     try:
         yield conn
+        conn.commit()
     finally:
         conn.close()
 
@@ -95,7 +96,6 @@ def add_url_check(conn, url_id, metadata):
                 metadata['description']
             )
         )
-        return cursor.fetchall()
 
 
 def get_url_name_id(conn, url_id):
