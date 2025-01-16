@@ -29,7 +29,6 @@ def add_url(conn, normalized_url):
             """, [normalized_url]
         )
         result = cursor.fetchone()
-        conn.commit()
         return result['id'] if result else None
 
 
@@ -96,7 +95,6 @@ def add_url_check(conn, url_id, metadata):
                 metadata['description']
             )
         )
-        conn.commit()
 
 
 def get_url_name_by_id(conn, url_id):
