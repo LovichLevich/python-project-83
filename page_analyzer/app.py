@@ -20,7 +20,7 @@ from page_analyzer.db import (
     get_db_connection,
     get_url_id,
     get_url_checks,
-    get_url_name_by_id,
+    get_url_name_id,
 )
 from page_analyzer.url_handling import normalize_url, url_length_check
 from page_analyzer.utils import get_metadata
@@ -95,7 +95,7 @@ def url_detail(url_id):
 @app.route("/run_check/<int:url_id>", methods=["POST"])
 def run_check(url_id):
     with get_db_connection() as conn:
-        url_name = get_url_name_by_id(conn, url_id)
+        url_name = get_url_name_id(conn, url_id)
         if not url_name:
             flash("URL не найден в базе данных.", "danger")
             return redirect(url_for("index")), 422
