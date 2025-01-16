@@ -1,10 +1,5 @@
 ### Hexlet tests and linter status:
 
-[![Actions Status](https://github.com/LovichLevich/python-project-83/actions/workflows/hexlet-check.yml/badge.svg)]
-[![Maintainability](https://api.codeclimate.com/v1/badges/e996d71e3f298f7a8cc9/maintainability)](https://codeclimate.com/github/LovichLevich/python-project-83/maintainability)
-
-### Hexlet tests and linter status:
-
 [![Actions Status](https://github.com/LovichLevich/python-project-83/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/LovichLevich/python-project-83/actions)
 [![Maintainability](https://api.codeclimate.com/v1/badges/e996d71e3f298f7a8cc9/maintainability)](https://codeclimate.com/github/LovichLevich/python-project-83/maintainability)
 
@@ -66,6 +61,15 @@ Launch the application using **Uvicorn**:
 make start
 ```
 
+## **6. Linting and Code Quality (Ruff)**
+Run **Ruff** for linting and formatting:
+
+```bash
+ruff check .
+ruff check . --fix
+ruff format .
+```
+
 ---
 
 ## **Using the Application**
@@ -81,15 +85,3 @@ make start
 - All results and error messages are displayed at the top of the page as **flash messages**.
 
 ---
-
-## **6. Linting and Code Quality (Ruff)**
-Run **Ruff** for linting and formatting:
-
-```bash
-ruff check .
-ruff check . --fix
-ruff format .
-```
-
----
-
