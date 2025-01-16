@@ -95,6 +95,7 @@ def add_url_check(conn, url_id, metadata):
                 metadata['description']
             )
         )
+        return cursor.fetchall()
 
 
 def get_url_name_id(conn, url_id):
