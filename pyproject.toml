@@ -36,7 +36,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
 line-length = 80
-exclude = ["migrations", "settings.py"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
@@ -47,7 +46,3 @@ select = ["E", "F", "I", "C90"]
 
 [tool.isort]
 line_length = 80
-exclude = [
-  "migrations",
-  "settings.py"
-]

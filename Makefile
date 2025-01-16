@@ -12,9 +12,5 @@ start:
 check:
 	poetry run flake8 page_analyzer
 	
-
-test-coverage:
-	poetry run pytest --cov=page_analyzer --cov-report xml
-
 build:
 	./build.sh
