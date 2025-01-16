@@ -96,10 +96,3 @@ def add_url_check(conn, url_id, metadata):
                 metadata['description']
             )
         )
-
-
-def get_url_name_id(conn, url_id):
-    with conn.cursor(cursor_factory=DictCursor) as cursor:
-        cursor.execute("SELECT name FROM urls WHERE id = %s", (url_id,))
-        result = cursor.fetchone()
-        return result['name'] if result else None
