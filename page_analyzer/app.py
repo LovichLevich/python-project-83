@@ -76,8 +76,8 @@ def start():
 @app.route("/urls", methods=["GET"])
 def urls():
     with get_db_connection() as conn:
-        sites = get_all_urls(conn)
-    return render_template("index_urls.html", sites=sites)
+        urls = get_all_urls(conn)
+    return render_template("index_urls.html", urls=urls)
 
 
 @app.route("/urls/<int:url_id>", methods=["GET"])
