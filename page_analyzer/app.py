@@ -94,10 +94,12 @@ def url_detail(url_id):
 @app.route("/run_check/<int:url_id>", methods=["POST"])
 def run_check(url_id):
     with get_db_connection() as conn:
-        url_name = get_url_id(conn, url_id)
-        if not url_name:
+        url_data = get_url_id(conn, url_id)
+        if not url_data:
             flash("URL не найден в базе данных.", "danger")
             return redirect(url_for("index")), 422
+
+        url_name = url_data['name']
 
         metadata = get_metadata(url_name)
         if metadata is None:
