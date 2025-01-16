@@ -18,15 +18,16 @@ from page_analyzer.db import (
     find_url_id,
     get_all_urls,
     get_db_connection,
-    get_url_id,
     get_url_checks,
+    get_url_id,
 )
 from page_analyzer.url_handling import normalize_url, url_length_check
 from page_analyzer.utils import get_metadata
 
-app = Flask(__name__)
 load_dotenv()
+app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['DATABASE_URL'] = os.getenv('DATABASE_URL')
 
 
 logging.basicConfig(
@@ -62,7 +63,7 @@ def start():
         flash("URL слишком длинный.", "danger")
         return render_template("index.html"), 422
 
-    with get_db_connection() as conn:
+    with get_db_connection(app.config['DATABASE_URL']) as conn:
         existing_url_id = find_url_id(conn, normalized_url)
         if existing_url_id is not None:
             flash("Страница уже существует", "warning")
@@ -75,14 +76,14 @@ def start():
 
 @app.route("/urls", methods=["GET"])
 def urls():
-    with get_db_connection() as conn:
+    with get_db_connection(app.config['DATABASE_URL']) as conn:
         urls = get_all_urls(conn)
     return render_template("index_urls.html", urls=urls)
 
 
 @app.route("/urls/<int:url_id>", methods=["GET"])
 def url_detail(url_id):
-    with get_db_connection() as conn:
+    with get_db_connection(app.config['DATABASE_URL']) as conn:
         url = get_url_id(conn, url_id)
         if not url:
             flash("URL не найден.", "danger")
@@ -93,7 +94,7 @@ def url_detail(url_id):
 
 @app.route("/run_check/<int:url_id>", methods=["POST"])
 def run_check(url_id):
-    with get_db_connection() as conn:
+    with get_db_connection(app.config['DATABASE_URL']) as conn:
         url_data = get_url_id(conn, url_id)
         if not url_data:
             flash("URL не найден в базе данных.", "danger")

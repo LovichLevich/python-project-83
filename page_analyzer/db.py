@@ -1,17 +1,12 @@
-import os
 from contextlib import contextmanager
-from dotenv import load_dotenv  # type: ignore
 
 import psycopg2  # type: ignore
 from psycopg2.extras import DictCursor  # type: ignore
 
-load_dotenv()
-DATABASE_URL = os.getenv('DATABASE_URL')
-
 
 @contextmanager
-def get_db_connection():
-    conn = psycopg2.connect(DATABASE_URL)
+def get_db_connection(database_url):
+    conn = psycopg2.connect(database_url)
     try:
         yield conn
         conn.commit()
