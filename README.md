@@ -57,7 +57,7 @@ psql -U <username> -d <database_name> -f database.sql
 ### **5. Run the Application:**
 Launch the application using **Makefile**:
 ```bash
-make start
+make dev
 ```
 
 ## **6. Linting and Code Quality (Ruff)**
