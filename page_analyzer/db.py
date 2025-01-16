@@ -62,7 +62,7 @@ def get_all_urls(conn):
         return cursor.fetchall()
 
 
-def get_url_by_id(conn, url_id):
+def get_url_id(conn, url_id):
     with conn.cursor(cursor_factory=DictCursor) as cursor:
         cursor.execute("SELECT * FROM urls WHERE id = %s", (url_id,))
         return cursor.fetchone()

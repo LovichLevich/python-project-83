@@ -18,7 +18,7 @@ from page_analyzer.db import (
     find_url_id,
     get_all_urls,
     get_db_connection,
-    get_url_by_id,
+    get_url_id,
     get_url_checks,
     get_url_name_by_id,
 )
@@ -84,7 +84,7 @@ def urls():
 @app.route("/urls/<int:url_id>", methods=["GET"])
 def url_detail(url_id):
     with get_db_connection() as conn:
-        url = get_url_by_id(conn, url_id)
+        url = get_url_id(conn, url_id)
         if not url:
             flash("URL не найден.", "danger")
             return redirect(url_for("urls")), 404
