@@ -41,25 +41,16 @@ def find_url_id(conn, normalized_url):
 
 def get_all_urls(conn):
     with conn.cursor(cursor_factory=DictCursor) as cursor:
-        cursor.execute(
-            """
-            SELECT
+        cursor.execute("""
+            SELECT DISTINCT ON (urls.id, urls.name)
                 urls.id,
                 urls.name,
-                (SELECT created_at
-                 FROM url_checks
-                 WHERE url_checks.url_id = urls.id
-                 ORDER BY created_at DESC
-                 LIMIT 1) AS created_at,
-                (SELECT status_code
-                 FROM url_checks
-                 WHERE url_checks.url_id = urls.id
-                 ORDER BY created_at DESC
-                 LIMIT 1) AS status_code
+                url_checks.created_at,
+                url_checks.status_code
             FROM urls
-            ORDER BY urls.id DESC;
-            """
-        )
+            LEFT JOIN url_checks ON urls.id = url_checks.url_id
+            ORDER BY urls.id DESC, urls.name, url_checks.created_at DESC;
+        """)
         return cursor.fetchall()
 
 
