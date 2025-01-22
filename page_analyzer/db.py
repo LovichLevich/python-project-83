@@ -8,11 +8,8 @@ from psycopg2.extras import DictCursor  # type: ignore
 def get_db_connection(database_url):
     conn = psycopg2.connect(database_url)
     try:
-        yield conn
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        raise e
+        with conn:
+            yield conn
     finally:
         conn.close()
 
