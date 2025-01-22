@@ -36,17 +36,27 @@ def find_url_id(conn, normalized_url):
         return result["id"] if result else None
 
 
-def get_all_urls(conn):
+def get_urls(conn):
     with conn.cursor(cursor_factory=DictCursor) as cursor:
         cursor.execute("""
-            SELECT DISTINCT ON (urls.id, urls.name)
+            SELECT
                 urls.id,
-                urls.name,
+                urls.name               
+            FROM urls
+            ORDER BY urls.id DESC
+        """)
+        return cursor.fetchall()
+    
+    
+def urls_cheks(conn):
+    with conn.cursor(cursor_factory=DictCursor) as cursor:
+        cursor.execute("""
+            SELECT DISTINCT ON (url_checks.url_id)
+                url_checks.url_id AS id,
                 url_checks.created_at,
                 url_checks.status_code
-            FROM urls
-            LEFT JOIN url_checks ON urls.id = url_checks.url_id
-            ORDER BY urls.id DESC, urls.name, url_checks.created_at DESC;
+            FROM url_checks
+            ORDER BY url_checks.url_id, url_checks.created_at DESC;
         """)
         return cursor.fetchall()
 

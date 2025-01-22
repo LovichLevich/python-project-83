@@ -16,12 +16,14 @@ from page_analyzer.db import (
     add_url,
     add_url_check,
     find_url_id,
-    get_all_urls,
     get_db_connection,
     get_url_checks,
     get_url_id,
+    get_urls,
+    urls_cheks,
 )
 from page_analyzer.url_handling import normalize_url, url_length_check
+from page_analyzer.url_merge_tool import merge_urls_checks
 from page_analyzer.utils import get_metadata
 
 load_dotenv()
@@ -76,7 +78,9 @@ def start():
 @app.route("/urls", methods=["GET"])
 def urls():
     with get_db_connection(app.config["DATABASE_URL"]) as conn:
-        urls = get_all_urls(conn)
+        all_urls = get_urls(conn)
+        all_checks = urls_cheks(conn)
+        urls = merge_urls_checks(all_urls, all_checks)
     return render_template("index_urls.html", urls=urls)
 
 
