@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
-import psycopg2  # type: ignore
-from psycopg2.extras import DictCursor  # type: ignore
+import psycopg2
+from psycopg2.extras import DictCursor
 
 
 @contextmanager

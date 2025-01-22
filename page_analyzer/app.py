@@ -1,8 +1,8 @@
 import logging
 import os
 
-from dotenv import load_dotenv  # type: ignore
-from flask import (  # type: ignore
+from dotenv import load_dotenv
+from flask import (
     Flask,
     flash,
     redirect,
@@ -10,7 +10,7 @@ from flask import (  # type: ignore
     request,
     url_for,
 )
-from validators import url as validate_url  # type: ignore
+from validators import url as validate_url
 
 from page_analyzer.db import (
     add_url,

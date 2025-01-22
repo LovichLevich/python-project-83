@@ -1,5 +1,5 @@
-import requests  # type: ignore
-from bs4 import BeautifulSoup  # type: ignore
+import requests
+from bs4 import BeautifulSoup
 
 
 def get_metadata(url):
