@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% block main %}
-  <h1>Страница не найдена</h1>
-  <p>Проверьте корректность адреса</p>
+<div class="container text-center mt-5">
+  <div class="alert alert-danger shadow-lg" role="alert">
+    <h1 class="display-4 fw-bold">Страница не найдена</h1>
+    <p class="lead">Проверьте корректность адреса.</p>
+    <a href="/" class="btn btn-primary mt-3">На главную</a>
+  </div>
+</div>
 {% endblock %}

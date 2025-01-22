@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% block main %}
-  <h1>Ошибка сервера</h1>
-  <p>Извините, попробуте выполнить ваш запрос позже</p>
+<div class="container text-center mt-5">
+  <div class="alert alert-danger shadow-lg" role="alert">
+    <h1 class="display-4 fw-bold">Ошибка сервера</h1>
+    <p class="lead">Извините, попробуйте выполнить ваш запрос позже.</p>
+    <a href="/" class="btn btn-primary mt-3">На главную</a>
+  </div>
+</div>
 {% endblock %}
