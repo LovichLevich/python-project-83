@@ -4,7 +4,7 @@
   <div class="alert alert-danger shadow-lg" role="alert">
     <h1 class="display-4 fw-bold">Ошибка сервера</h1>
     <p class="lead">Извините, попробуйте выполнить ваш запрос позже.</p>
-    <a href="/" class="btn btn-primary mt-3">На главную</a>
+    <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">На главную</a>
   </div>
 </div>
 {% endblock %}

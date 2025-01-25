@@ -36,7 +36,7 @@ def find_url_id(conn, normalized_url):
         return result["id"] if result else None
 
 
-def get_urls(conn):
+def get_urls_checks(conn):
     with conn.cursor(cursor_factory=DictCursor) as cursor:
         cursor.execute("""
             SELECT
@@ -45,11 +45,8 @@ def get_urls(conn):
             FROM urls
             ORDER BY urls.id DESC
         """)
-        return cursor.fetchall()
-    
-    
-def urls_cheks(conn):
-    with conn.cursor(cursor_factory=DictCursor) as cursor:
+        all_urls = cursor.fetchall()
+
         cursor.execute("""
             SELECT DISTINCT ON (url_checks.url_id)
                 url_checks.url_id AS id,
@@ -58,7 +55,13 @@ def urls_cheks(conn):
             FROM url_checks
             ORDER BY url_checks.url_id, url_checks.created_at DESC;
         """)
-        return cursor.fetchall()
+        all_checks = cursor.fetchall()
+
+    checks_dict = {item["id"]: item for item in all_checks}
+    merged_urls = [
+        {**url, **checks_dict.get(url["id"], {})} for url in all_urls
+    ]
+    return merged_urls
 
 
 def get_url_id(conn, url_id):
